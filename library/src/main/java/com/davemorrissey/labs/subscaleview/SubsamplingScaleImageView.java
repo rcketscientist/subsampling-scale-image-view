@@ -1,9 +1,7 @@
 package com.davemorrissey.labs.subscaleview;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -15,12 +13,9 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
-import android.support.media.ExifInterface;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
@@ -37,8 +32,8 @@ import com.davemorrissey.labs.subscaleview.decoder.CompatDecoderFactory;
 import com.davemorrissey.labs.subscaleview.decoder.DecoderFactory;
 import com.davemorrissey.labs.subscaleview.decoder.ImageDecoder;
 import com.davemorrissey.labs.subscaleview.decoder.ImageRegionDecoder;
-import com.davemorrissey.labs.subscaleview.decoder.SkiaImageDecoder;
-import com.davemorrissey.labs.subscaleview.decoder.SkiaImageRegionDecoder;
+//import com.davemorrissey.labs.subscaleview.decoder.SkiaImageDecoder;
+//import com.davemorrissey.labs.subscaleview.decoder.SkiaImageRegionDecoder;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -140,8 +135,7 @@ public class SubsamplingScaleImageView extends View {
     // Specifies if a cache handler is also referencing the bitmap. Do not recycle if so.
     private boolean bitmapIsCached;
 
-    // Uri of full size image
-    private Uri uri;
+    private ImageSource source;
 
     // Sample size used to display the whole image when fully zoomed out
     private int fullImageSampleSize;
@@ -228,8 +222,8 @@ public class SubsamplingScaleImageView extends View {
     // Tile and image decoding
     private ImageRegionDecoder decoder;
     private final ReadWriteLock decoderLock = new ReentrantReadWriteLock(true);
-    private DecoderFactory<? extends ImageDecoder> bitmapDecoderFactory = new CompatDecoderFactory<ImageDecoder>(SkiaImageDecoder.class);
-    private DecoderFactory<? extends ImageRegionDecoder> regionDecoderFactory = new CompatDecoderFactory<ImageRegionDecoder>(SkiaImageRegionDecoder.class);
+//    private DecoderFactory<? extends ImageDecoder> bitmapDecoderFactory = new CompatDecoderFactory<ImageDecoder>(SkiaImageDecoder.class);
+    private DecoderFactory<? extends ImageRegionDecoder> regionDecoderFactory;// = new CompatDecoderFactory<ImageRegionDecoder>(SkiaImageRegionDecoder.class);
 
     // Debug values
     private PointF vCenterStart;
@@ -304,18 +298,7 @@ public class SubsamplingScaleImageView extends View {
         // Handle XML attributes
         if (attr != null) {
             TypedArray typedAttr = getContext().obtainStyledAttributes(attr, styleable.SubsamplingScaleImageView);
-            if (typedAttr.hasValue(styleable.SubsamplingScaleImageView_assetName)) {
-                String assetName = typedAttr.getString(styleable.SubsamplingScaleImageView_assetName);
-                if (assetName != null && assetName.length() > 0) {
-                    setImage(ImageSource.asset(assetName).tilingEnabled());
-                }
-            }
-            if (typedAttr.hasValue(styleable.SubsamplingScaleImageView_src)) {
-                int resId = typedAttr.getResourceId(styleable.SubsamplingScaleImageView_src, 0);
-                if (resId > 0) {
-                    setImage(ImageSource.resource(resId).tilingEnabled());
-                }
-            }
+
             if (typedAttr.hasValue(styleable.SubsamplingScaleImageView_panEnabled)) {
                 setPanEnabled(typedAttr.getBoolean(styleable.SubsamplingScaleImageView_panEnabled, true));
             }
@@ -428,48 +411,42 @@ public class SubsamplingScaleImageView extends View {
         reset(true);
         if (state != null) { restoreState(state); }
 
-        if (previewSource != null) {
-            if (imageSource.getBitmap() != null) {
-                throw new IllegalArgumentException("Preview image cannot be used when a bitmap is provided for the main image");
-            }
-            if (imageSource.getSWidth() <= 0 || imageSource.getSHeight() <= 0) {
-                throw new IllegalArgumentException("Preview image cannot be used unless dimensions are provided for the main image");
-            }
-            this.sWidth = imageSource.getSWidth();
-            this.sHeight = imageSource.getSHeight();
-            this.pRegion = previewSource.getSRegion();
-            if (previewSource.getBitmap() != null) {
-                this.bitmapIsCached = previewSource.isCached();
-                onPreviewLoaded(previewSource.getBitmap());
-            } else {
-                Uri uri = previewSource.getUri();
-                if (uri == null && previewSource.getResource() != null) {
-                    uri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getContext().getPackageName() + "/" + previewSource.getResource());
-                }
-                BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, true);
-                execute(task);
-            }
-        }
+        //TODO: Possibly refactor preview
+//        if (previewSource != null) {
+//            if (imageSource.getBitmap() != null) {
+//                throw new IllegalArgumentException("Preview image cannot be used when a bitmap is provided for the main image");
+//            }
+//            if (imageSource.getWidth() <= 0 || imageSource.getHeight() <= 0) {
+//                throw new IllegalArgumentException("Preview image cannot be used unless dimensions are provided for the main image");
+//            }
+//            this.sWidth = imageSource.getWidth();
+//            this.sHeight = imageSource.getHeight();
+//            this.pRegion = previewSource.getRegion();
+//            if (previewSource.getBitmap() != null) {
+//                this.bitmapIsCached = previewSource.isCached();
+//                onPreviewLoaded(previewSource.getBitmap());
+//            } else {
+//                Uri uri = previewSource.getUri();
+//                if (uri == null && previewSource.getResource() != null) {
+//                    uri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getContext().getPackageName() + "/" + previewSource.getResource());
+//                }
+//                BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, true);
+//                execute(task);
+//            }
+//        }
 
-        if (imageSource.getBitmap() != null && imageSource.getSRegion() != null) {
-            onImageLoaded(Bitmap.createBitmap(imageSource.getBitmap(), imageSource.getSRegion().left, imageSource.getSRegion().top, imageSource.getSRegion().width(), imageSource.getSRegion().height()), ORIENTATION_0, false);
-        } else if (imageSource.getBitmap() != null) {
-            onImageLoaded(imageSource.getBitmap(), ORIENTATION_0, imageSource.isCached());
+        sRegion = imageSource.getRegion();
+        source  = imageSource;
+
+        if (imageSource.getTile() || sRegion != null) {
+            // Load the bitmap using tile decoding.
+            TilesInitTask task = new TilesInitTask(this, getContext(), regionDecoderFactory, source);
+            execute(task);
         } else {
-            sRegion = imageSource.getSRegion();
-            uri = imageSource.getUri();
-            if (uri == null && imageSource.getResource() != null) {
-                uri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getContext().getPackageName() + "/" + imageSource.getResource());
-            }
-            if (imageSource.getTile() || sRegion != null) {
-                // Load the bitmap using tile decoding.
-                TilesInitTask task = new TilesInitTask(this, getContext(), regionDecoderFactory, uri);
-                execute(task);
-            } else {
-                // Load the bitmap as a single image.
-                BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, false);
-                execute(task);
-            }
+            // Load the bitmap as a single image.
+            int sampleSize = decoder.getWidth() / this.getWidth();
+            BitmapLoadTask task = new BitmapLoadTask(this, getContext(), decoder, source, sampleSize, false);
+            execute(task);
         }
     }
 
@@ -503,7 +480,7 @@ public class SubsamplingScaleImageView extends View {
         matrix = null;
         sRect = null;
         if (newImage) {
-            uri = null;
+            source = null;
             decoderLock.writeLock().lock();
             try {
                 if (decoder != null) {
@@ -1251,9 +1228,9 @@ public class SubsamplingScaleImageView extends View {
 
         satTemp = new ScaleAndTranslate(0f, new PointF(0, 0));
         fitToBounds(true, satTemp);
-
-        // Load double resolution - next level will be split into four tiles and at the center all four are required,
-        // so don't bother with tiling until the next level 16 tiles are needed.
+//
+//        // Load double resolution - next level will be split into four tiles and at the center all four are required,
+//        // so don't bother with tiling until the next level 16 tiles are needed.
         fullImageSampleSize = calculateInSampleSize(satTemp.scale);
         if (fullImageSampleSize > 1) {
             fullImageSampleSize /= 2;
@@ -1261,11 +1238,12 @@ public class SubsamplingScaleImageView extends View {
 
         if (fullImageSampleSize == 1 && sRegion == null && sWidth() < maxTileDimensions.x && sHeight() < maxTileDimensions.y) {
 
-            // Whole image is required at native resolution, and is smaller than the canvas max bitmap size.
-            // Use BitmapDecoder for better image support.
-            decoder.recycle();
-            decoder = null;
-            BitmapLoadTask task = new BitmapLoadTask(this, getContext(), bitmapDecoderFactory, uri, false);
+//            // Whole image is required at native resolution, and is smaller than the canvas max bitmap size.
+//            // Use BitmapDecoder for better image support.
+//            decoder.recycle();
+//            decoder = null;
+            int sampleSize = decoder.getWidth() / this.getWidth();
+            BitmapLoadTask task = new BitmapLoadTask(this, getContext(), decoder, source, sampleSize, false);
             execute(task);
 
         } else {
@@ -1535,11 +1513,11 @@ public class SubsamplingScaleImageView extends View {
         private final WeakReference<SubsamplingScaleImageView> viewRef;
         private final WeakReference<Context> contextRef;
         private final WeakReference<DecoderFactory<? extends ImageRegionDecoder>> decoderFactoryRef;
-        private final Uri source;
+        private final ImageSource source;
         private ImageRegionDecoder decoder;
         private Exception exception;
 
-        TilesInitTask(SubsamplingScaleImageView view, Context context, DecoderFactory<? extends ImageRegionDecoder> decoderFactory, Uri source) {
+        TilesInitTask(SubsamplingScaleImageView view, Context context, DecoderFactory<? extends ImageRegionDecoder> decoderFactory, ImageSource source) {
             this.viewRef = new WeakReference<>(view);
             this.contextRef = new WeakReference<>(context);
             this.decoderFactoryRef = new WeakReference<DecoderFactory<? extends ImageRegionDecoder>>(decoderFactory);
@@ -1717,18 +1695,20 @@ public class SubsamplingScaleImageView extends View {
     private static class BitmapLoadTask extends AsyncTask<Void, Void, Integer> {
         private final WeakReference<SubsamplingScaleImageView> viewRef;
         private final WeakReference<Context> contextRef;
-        private final WeakReference<DecoderFactory<? extends ImageDecoder>> decoderFactoryRef;
-        private final Uri source;
+        private final WeakReference<ImageRegionDecoder> decoderRef;
+        private final ImageSource source;
+        private final int sampleSize;
         private final boolean preview;
         private Bitmap bitmap;
         private Exception exception;
 
-        BitmapLoadTask(SubsamplingScaleImageView view, Context context, DecoderFactory<? extends ImageDecoder> decoderFactory, Uri source, boolean preview) {
+        BitmapLoadTask(SubsamplingScaleImageView view, Context context, ImageRegionDecoder decoder, ImageSource source, int sampleSize, boolean preview) {
             this.viewRef = new WeakReference<>(view);
             this.contextRef = new WeakReference<>(context);
-            this.decoderFactoryRef = new WeakReference<DecoderFactory<? extends ImageDecoder>>(decoderFactory);
+            this.decoderRef = new WeakReference<>(decoder);
             this.source = source;
             this.preview = preview;
+            this.sampleSize = sampleSize;
         }
 
         @Override
@@ -1736,11 +1716,13 @@ public class SubsamplingScaleImageView extends View {
             try {
                 String sourceUri = source.toString();
                 Context context = contextRef.get();
-                DecoderFactory<? extends ImageDecoder> decoderFactory = decoderFactoryRef.get();
+                ImageRegionDecoder decoder = decoderRef.get();
+
                 SubsamplingScaleImageView view = viewRef.get();
-                if (context != null && decoderFactory != null && view != null) {
+                if (context != null && decoder != null && view != null) {
                     view.debug("BitmapLoadTask.doInBackground");
-                    bitmap = decoderFactory.make().decode(context, source);
+                    Rect fullImage = new Rect(0, 0, decoder.getWidth(), decoder.getHeight());
+                    bitmap = decoder.decodeRegion(fullImage, sampleSize);
                     return view.getExifOrientation(context, sourceUri);
                 }
             } catch (Exception e) {
@@ -1833,47 +1815,48 @@ public class SubsamplingScaleImageView extends View {
     @AnyThread
     private int getExifOrientation(Context context, String sourceUri) {
         int exifOrientation = ORIENTATION_0;
-        if (sourceUri.startsWith(ContentResolver.SCHEME_CONTENT)) {
-            Cursor cursor = null;
-            try {
-                String[] columns = { MediaStore.Images.Media.ORIENTATION };
-                cursor = context.getContentResolver().query(Uri.parse(sourceUri), columns, null, null, null);
-                if (cursor != null) {
-                    if (cursor.moveToFirst()) {
-                        int orientation = cursor.getInt(0);
-                        if (VALID_ORIENTATIONS.contains(orientation) && orientation != ORIENTATION_USE_EXIF) {
-                            exifOrientation = orientation;
-                        } else {
-                            Log.w(TAG, "Unsupported orientation: " + orientation);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Could not get orientation of image from media store");
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-        } else if (sourceUri.startsWith(ImageSource.FILE_SCHEME) && !sourceUri.startsWith(ImageSource.ASSET_SCHEME)) {
-            try {
-                ExifInterface exifInterface = new ExifInterface(sourceUri.substring(ImageSource.FILE_SCHEME.length() - 1));
-                int orientationAttr = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                if (orientationAttr == ExifInterface.ORIENTATION_NORMAL || orientationAttr == ExifInterface.ORIENTATION_UNDEFINED) {
-                    exifOrientation = ORIENTATION_0;
-                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_90) {
-                    exifOrientation = ORIENTATION_90;
-                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_180) {
-                    exifOrientation = ORIENTATION_180;
-                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_270) {
-                    exifOrientation = ORIENTATION_270;
-                } else {
-                    Log.w(TAG, "Unsupported EXIF orientation: " + orientationAttr);
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Could not get EXIF orientation of image");
-            }
-        }
+        // TODO: Handle this in ImageSource?
+//        if (sourceUri.startsWith(ContentResolver.SCHEME_CONTENT)) {
+//            Cursor cursor = null;
+//            try {
+//                String[] columns = { MediaStore.Images.Media.ORIENTATION };
+//                cursor = context.getContentResolver().query(Uri.parse(sourceUri), columns, null, null, null);
+//                if (cursor != null) {
+//                    if (cursor.moveToFirst()) {
+//                        int orientation = cursor.getInt(0);
+//                        if (VALID_ORIENTATIONS.contains(orientation) && orientation != ORIENTATION_USE_EXIF) {
+//                            exifOrientation = orientation;
+//                        } else {
+//                            Log.w(TAG, "Unsupported orientation: " + orientation);
+//                        }
+//                    }
+//                }
+//            } catch (Exception e) {
+//                Log.w(TAG, "Could not get orientation of image from media store");
+//            } finally {
+//                if (cursor != null) {
+//                    cursor.close();
+//                }
+//            }
+//        } else if (sourceUri.startsWith(ImageSource.FILE_SCHEME) && !sourceUri.startsWith(ImageSource.ASSET_SCHEME)) {
+//            try {
+//                ExifInterface exifInterface = new ExifInterface(sourceUri.substring(ImageSource.FILE_SCHEME.length() - 1));
+//                int orientationAttr = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+//                if (orientationAttr == ExifInterface.ORIENTATION_NORMAL || orientationAttr == ExifInterface.ORIENTATION_UNDEFINED) {
+//                    exifOrientation = ORIENTATION_0;
+//                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_90) {
+//                    exifOrientation = ORIENTATION_90;
+//                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_180) {
+//                    exifOrientation = ORIENTATION_180;
+//                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_270) {
+//                    exifOrientation = ORIENTATION_270;
+//                } else {
+//                    Log.w(TAG, "Unsupported EXIF orientation: " + orientationAttr);
+//                }
+//            } catch (Exception e) {
+//                Log.w(TAG, "Could not get EXIF orientation of image");
+//            }
+//        }
         return exifOrientation;
     }
 
@@ -2383,32 +2366,32 @@ public class SubsamplingScaleImageView extends View {
         this.regionDecoderFactory = regionDecoderFactory;
     }
 
-    /**
-     * Swap the default bitmap decoder implementation for one of your own. You must do this before setting the image file or
-     * asset, and you cannot use a custom decoder when using layout XML to set an asset name. Your class must have a
-     * public default constructor.
-     * @param bitmapDecoderClass The {@link ImageDecoder} implementation to use.
-     */
-    public final void setBitmapDecoderClass(@NonNull Class<? extends ImageDecoder> bitmapDecoderClass) {
-        //noinspection ConstantConditions
-        if (bitmapDecoderClass == null) {
-            throw new IllegalArgumentException("Decoder class cannot be set to null");
-        }
-        this.bitmapDecoderFactory = new CompatDecoderFactory<>(bitmapDecoderClass);
-    }
-
-    /**
-     * Swap the default bitmap decoder implementation for one of your own. You must do this before setting the image file or
-     * asset, and you cannot use a custom decoder when using layout XML to set an asset name.
-     * @param bitmapDecoderFactory The {@link DecoderFactory} implementation that produces {@link ImageDecoder} instances.
-     */
-    public final void setBitmapDecoderFactory(@NonNull DecoderFactory<? extends ImageDecoder> bitmapDecoderFactory) {
-        //noinspection ConstantConditions
-        if (bitmapDecoderFactory == null) {
-            throw new IllegalArgumentException("Decoder factory cannot be set to null");
-        }
-        this.bitmapDecoderFactory = bitmapDecoderFactory;
-    }
+//    /**
+//     * Swap the default bitmap decoder implementation for one of your own. You must do this before setting the image file or
+//     * asset, and you cannot use a custom decoder when using layout XML to set an asset name. Your class must have a
+//     * public default constructor.
+//     * @param bitmapDecoderClass The {@link ImageDecoder} implementation to use.
+//     */
+//    public final void setBitmapDecoderClass(@NonNull Class<? extends ImageDecoder> bitmapDecoderClass) {
+//        //noinspection ConstantConditions
+//        if (bitmapDecoderClass == null) {
+//            throw new IllegalArgumentException("Decoder class cannot be set to null");
+//        }
+//        this.bitmapDecoderFactory = new CompatDecoderFactory<>(bitmapDecoderClass);
+//    }
+//
+//    /**
+//     * Swap the default bitmap decoder implementation for one of your own. You must do this before setting the image file or
+//     * asset, and you cannot use a custom decoder when using layout XML to set an asset name.
+//     * @param bitmapDecoderFactory The {@link DecoderFactory} implementation that produces {@link ImageDecoder} instances.
+//     */
+//    public final void setBitmapDecoderFactory(@NonNull DecoderFactory<? extends ImageDecoder> bitmapDecoderFactory) {
+//        //noinspection ConstantConditions
+//        if (bitmapDecoderFactory == null) {
+//            throw new IllegalArgumentException("Decoder factory cannot be set to null");
+//        }
+//        this.bitmapDecoderFactory = bitmapDecoderFactory;
+//    }
 
     /**
      * Calculate how much further the image can be panned in each direction. The results are set on
@@ -2848,7 +2831,7 @@ public class SubsamplingScaleImageView extends View {
      * @return If an image is currently set.
      */
     public boolean hasImage() {
-        return uri != null || bitmap != null;
+        return source != null || bitmap != null;
     }
 
     /**

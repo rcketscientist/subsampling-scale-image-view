@@ -7,11 +7,13 @@ import android.graphics.Rect;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import com.davemorrissey.labs.subscaleview.ImageSource;
+
 /**
  * Interface for image decoding classes, allowing the default {@link android.graphics.BitmapRegionDecoder}
  * based on the Skia library to be replaced with a custom class.
  */
-public interface ImageRegionDecoder {
+public interface ImageRegionDecoder<T extends ImageSource> {
 
     /**
      * Initialise the decoder. When possible, perform initial setup work once in this method. The
@@ -23,11 +25,11 @@ public interface ImageRegionDecoder {
      * <br>
      * Resource: <code>android.resource://com.example.app/drawable/picture</code>
      * @param context Application context. A reference may be held, but must be cleared on recycle.
-     * @param uri URI of the image.
+     * @param source Custom source of image
      * @return Dimensions of the image.
      * @throws Exception if initialisation fails.
      */
-    @NonNull Point init(Context context, @NonNull Uri uri) throws Exception;
+    @NonNull Point init(Context context, @NonNull T source) throws Exception;
 
     /**
      * <p>
@@ -58,4 +60,7 @@ public interface ImageRegionDecoder {
      */
     void recycle();
 
+    int getWidth();
+
+    int getHeight();
 }

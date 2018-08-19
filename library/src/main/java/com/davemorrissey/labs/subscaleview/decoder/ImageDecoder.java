@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import com.davemorrissey.labs.subscaleview.ImageSource;
+
 /**
  * Interface for image decoding classes, allowing the default {@link android.graphics.BitmapFactory}
  * based on the Skia library to be replaced with a custom class.
@@ -21,10 +23,10 @@ public interface ImageDecoder {
      * Resource: <code>android.resource://com.example.app/drawable/picture</code>
      *
      * @param context Application context
-     * @param uri URI of the image
+     * @param source custom source of the image
      * @return the decoded bitmap
      * @throws Exception if decoding fails.
      */
-    @NonNull Bitmap decode(Context context, @NonNull Uri uri) throws Exception;
+    @NonNull Bitmap decode(Context context, @NonNull ImageSource source) throws Exception;
 
 }

@@ -17,143 +17,18 @@ import java.net.URLDecoder;
  * ImageSource object for the full size image using the {@link #dimensions(int, int)} method.
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public final class ImageSource {
+public class ImageSource<T> {
 
-    static final String FILE_SCHEME = "file:///";
-    static final String ASSET_SCHEME = "file:///android_asset/";
-
-    private final Uri uri;
-    private final Bitmap bitmap;
-    private final Integer resource;
+    private final T source;
     private boolean tile;
     private int sWidth;
     private int sHeight;
     private Rect sRegion;
-    private boolean cached;
+    protected boolean useOnlyRegionDecoder = false;
 
-    private ImageSource(Bitmap bitmap, boolean cached) {
-        this.bitmap = bitmap;
-        this.uri = null;
-        this.resource = null;
-        this.tile = false;
-        this.sWidth = bitmap.getWidth();
-        this.sHeight = bitmap.getHeight();
-        this.cached = cached;
-    }
-
-    private ImageSource(@NonNull Uri uri) {
-        // #114 If file doesn't exist, attempt to url decode the URI and try again
-        String uriString = uri.toString();
-        if (uriString.startsWith(FILE_SCHEME)) {
-            File uriFile = new File(uriString.substring(FILE_SCHEME.length() - 1));
-            if (!uriFile.exists()) {
-                try {
-                    uri = Uri.parse(URLDecoder.decode(uriString, "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    // Fallback to encoded URI. This exception is not expected.
-                }
-            }
-        }
-        this.bitmap = null;
-        this.uri = uri;
-        this.resource = null;
+    public ImageSource(@NonNull T source) {
+        this.source = source;
         this.tile = true;
-    }
-
-    private ImageSource(int resource) {
-        this.bitmap = null;
-        this.uri = null;
-        this.resource = resource;
-        this.tile = true;
-    }
-
-    /**
-     * Create an instance from a resource. The correct resource for the device screen resolution will be used.
-     * @param resId resource ID.
-     * @return an {@link ImageSource} instance.
-     */
-    @NonNull
-    public static ImageSource resource(int resId) {
-        return new ImageSource(resId);
-    }
-
-    /**
-     * Create an instance from an asset name.
-     * @param assetName asset name.
-     * @return an {@link ImageSource} instance.
-     */
-    @NonNull
-    public static ImageSource asset(@NonNull String assetName) {
-        //noinspection ConstantConditions
-        if (assetName == null) {
-            throw new NullPointerException("Asset name must not be null");
-        }
-        return uri(ASSET_SCHEME + assetName);
-    }
-
-    /**
-     * Create an instance from a URI. If the URI does not start with a scheme, it's assumed to be the URI
-     * of a file.
-     * @param uri image URI.
-     * @return an {@link ImageSource} instance.
-     */
-    @NonNull
-    public static ImageSource uri(@NonNull String uri) {
-        //noinspection ConstantConditions
-        if (uri == null) {
-            throw new NullPointerException("Uri must not be null");
-        }
-        if (!uri.contains("://")) {
-            if (uri.startsWith("/")) {
-                uri = uri.substring(1);
-            }
-            uri = FILE_SCHEME + uri;
-        }
-        return new ImageSource(Uri.parse(uri));
-    }
-
-    /**
-     * Create an instance from a URI.
-     * @param uri image URI.
-     * @return an {@link ImageSource} instance.
-     */
-    @NonNull
-    public static ImageSource uri(@NonNull Uri uri) {
-        //noinspection ConstantConditions
-        if (uri == null) {
-            throw new NullPointerException("Uri must not be null");
-        }
-        return new ImageSource(uri);
-    }
-
-    /**
-     * Provide a loaded bitmap for display.
-     * @param bitmap bitmap to be displayed.
-     * @return an {@link ImageSource} instance.
-     */
-    @NonNull
-    public static ImageSource bitmap(@NonNull Bitmap bitmap) {
-        //noinspection ConstantConditions
-        if (bitmap == null) {
-            throw new NullPointerException("Bitmap must not be null");
-        }
-        return new ImageSource(bitmap, false);
-    }
-
-    /**
-     * Provide a loaded and cached bitmap for display. This bitmap will not be recycled when it is no
-     * longer needed. Use this method if you loaded the bitmap with an image loader such as Picasso
-     * or Volley.
-     * @param bitmap bitmap to be displayed.
-     * @return an {@link ImageSource} instance.
-     */
-    @NonNull
-    public static ImageSource cachedBitmap(@NonNull Bitmap bitmap) {
-        //noinspection ConstantConditions
-        if (bitmap == null) {
-            throw new NullPointerException("Bitmap must not be null");
-        }
-        return new ImageSource(bitmap, true);
     }
 
     /**
@@ -211,10 +86,8 @@ public final class ImageSource {
      */
     @NonNull
     public ImageSource dimensions(int sWidth, int sHeight) {
-        if (bitmap == null) {
-            this.sWidth = sWidth;
-            this.sHeight = sHeight;
-        }
+        this.sWidth = sWidth;
+        this.sHeight = sHeight;
         setInvariants();
         return this;
     }
@@ -227,35 +100,23 @@ public final class ImageSource {
         }
     }
 
-    protected final Uri getUri() {
-        return uri;
-    }
-
-    protected final Bitmap getBitmap() {
-        return bitmap;
-    }
-
-    protected final Integer getResource() {
-        return resource;
-    }
+    public final T getSource() { return source; }
 
     protected final boolean getTile() {
         return tile;
     }
 
-    protected final int getSWidth() {
+    protected int getWidth() {
         return sWidth;
     }
 
-    protected final int getSHeight() {
+    protected int getHeight() {
         return sHeight;
     }
 
-    protected final Rect getSRegion() {
+    protected final Rect getRegion() {
         return sRegion;
     }
 
-    protected final boolean isCached() {
-        return cached;
-    }
+    protected final boolean useOnlyRegionDecoder() { return useOnlyRegionDecoder; }
 }
