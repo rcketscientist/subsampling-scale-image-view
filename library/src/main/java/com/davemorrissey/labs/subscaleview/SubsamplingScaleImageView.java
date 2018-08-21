@@ -220,6 +220,7 @@ public class SubsamplingScaleImageView extends View {
     private GestureDetector singleDetector;
 
     // Tile and image decoding
+    private boolean baseLayerLoaded = false;    // Replaces (decoder != null) as a load check
     private ImageRegionDecoder decoder;
     private final ReadWriteLock decoderLock = new ReentrantReadWriteLock(true);
 //    private DecoderFactory<? extends ImageDecoder> bitmapDecoderFactory = new CompatDecoderFactory<ImageDecoder>(SkiaImageDecoder.class);
@@ -954,7 +955,7 @@ public class SubsamplingScaleImageView extends View {
         }
 
         // When using tiles, on first render with no tile map ready, initialise it and kick off async base image loading.
-        if (tileMap == null && decoder != null) {
+        if (tileMap == null && !baseLayerLoaded) {
             initialiseBaseLayer(getMaxBitmapDimensions(canvas));
         }
 
@@ -1237,11 +1238,9 @@ public class SubsamplingScaleImageView extends View {
         }
 
         if (fullImageSampleSize == 1 && sRegion == null && sWidth() < maxTileDimensions.x && sHeight() < maxTileDimensions.y) {
-
 //            // Whole image is required at native resolution, and is smaller than the canvas max bitmap size.
 //            // Use BitmapDecoder for better image support.
-//            decoder.recycle();
-//            decoder = null;
+            baseLayerLoaded = true;
             int sampleSize = decoder.getWidth() / this.getWidth();
             BitmapLoadTask task = new BitmapLoadTask(this, getContext(), decoder, source, sampleSize, false);
             execute(task);
