@@ -1,9 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.davemorrissey.labs.subscaleview.test"
+        minSdkVersion 17
     }
 
     sourceSets {
@@ -15,5 +16,5 @@ android {
 
 dependencies {
     implementation project(':library')
-    implementation 'com.android.support:support-v4:27.1.0'
+    implementation "androidx.appcompat:appcompat:$appcompatVersion"
 }

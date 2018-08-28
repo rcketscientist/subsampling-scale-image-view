@@ -4,10 +4,10 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.net.Uri;
-import android.support.annotation.NonNull;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
+
+import androidx.annotation.NonNull;
 
 /**
  * Interface for image decoding classes, allowing the default {@link android.graphics.BitmapRegionDecoder}
@@ -29,7 +29,8 @@ public interface ImageRegionDecoder<T extends ImageSource> {
      * @return Dimensions of the image.
      * @throws Exception if initialisation fails.
      */
-    @NonNull Point init(Context context, @NonNull T source) throws Exception;
+    @NonNull
+    Point init(Context context, @NonNull T source) throws Exception;
 
     /**
      * <p>

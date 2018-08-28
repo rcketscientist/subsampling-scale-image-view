@@ -1,6 +1,5 @@
 package com.davemorrissey.labs.subscaleview.test.extension;
 
-import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import com.davemorrissey.labs.subscaleview.test.AbstractFragmentsActivity;
@@ -10,6 +9,8 @@ import com.davemorrissey.labs.subscaleview.test.imagedisplay.ImageDisplayActivit
 
 import java.util.Arrays;
 import java.util.List;
+
+import androidx.fragment.app.Fragment;
 
 import static com.davemorrissey.labs.subscaleview.test.R.layout.fragments_activity;
 import static com.davemorrissey.labs.subscaleview.test.R.string.extension_p1_subtitle;

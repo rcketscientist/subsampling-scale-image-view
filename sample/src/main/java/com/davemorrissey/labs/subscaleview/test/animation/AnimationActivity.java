@@ -2,7 +2,6 @@ package com.davemorrissey.labs.subscaleview.test.animation;
 
 import android.graphics.PointF;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.view.View;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
@@ -15,9 +14,22 @@ import com.davemorrissey.labs.subscaleview.test.extension.views.PinView;
 import java.util.Arrays;
 import java.util.Random;
 
-import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.*;
-import static com.davemorrissey.labs.subscaleview.test.R.string.*;
-import static com.davemorrissey.labs.subscaleview.test.R.layout.*;
+import androidx.annotation.Nullable;
+
+import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.EASE_OUT_QUAD;
+import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.OnClickListener;
+import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.PAN_LIMIT_CENTER;
+import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.PAN_LIMIT_INSIDE;
+import static com.davemorrissey.labs.subscaleview.test.R.layout.animation_activity;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_p1_subtitle;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_p1_text;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_p2_subtitle;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_p2_text;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_p3_subtitle;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_p3_text;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_p4_subtitle;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_p4_text;
+import static com.davemorrissey.labs.subscaleview.test.R.string.animation_title;
 
 public class AnimationActivity extends AbstractPagesActivity {
 

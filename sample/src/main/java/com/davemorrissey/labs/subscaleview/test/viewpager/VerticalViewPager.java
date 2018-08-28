@@ -1,11 +1,12 @@
 package com.davemorrissey.labs.subscaleview.test.viewpager;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.viewpager.widget.ViewPager;
 
 /**
  * From http://stackoverflow.com/a/22797619/2719186

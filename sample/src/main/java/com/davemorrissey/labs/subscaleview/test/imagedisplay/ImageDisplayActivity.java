@@ -1,6 +1,5 @@
 package com.davemorrissey.labs.subscaleview.test.imagedisplay;
 
-import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import com.davemorrissey.labs.subscaleview.test.AbstractFragmentsActivity;
@@ -10,8 +9,16 @@ import com.davemorrissey.labs.subscaleview.test.R.id;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.davemorrissey.labs.subscaleview.test.R.string.*;
-import static com.davemorrissey.labs.subscaleview.test.R.layout.*;
+import androidx.fragment.app.Fragment;
+
+import static com.davemorrissey.labs.subscaleview.test.R.layout.fragments_activity;
+import static com.davemorrissey.labs.subscaleview.test.R.string.display_p1_subtitle;
+import static com.davemorrissey.labs.subscaleview.test.R.string.display_p1_text;
+import static com.davemorrissey.labs.subscaleview.test.R.string.display_p2_subtitle;
+import static com.davemorrissey.labs.subscaleview.test.R.string.display_p2_text;
+import static com.davemorrissey.labs.subscaleview.test.R.string.display_p3_subtitle;
+import static com.davemorrissey.labs.subscaleview.test.R.string.display_p3_text;
+import static com.davemorrissey.labs.subscaleview.test.R.string.display_title;
 
 public class ImageDisplayActivity extends AbstractFragmentsActivity {
 
