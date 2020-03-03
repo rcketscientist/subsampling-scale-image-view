@@ -18,7 +18,7 @@ configurations {
 }
 
 dependencies {
-    javadocs "androidx.annotation:annotation:$annotationsVersion"
+    javadocs "androidx.annotation:annotation:$annotationVersion"
     javadocs "androidx.exifinterface:exifinterface:$exifVersion"
     implementation "androidx.annotation:annotation:$annotationVersion"
     implementation "androidx.exifinterface:exifinterface:$exifVersion"
