@@ -20,6 +20,6 @@ configurations {
 dependencies {
     javadocs "androidx.annotation:annotation:$annotationsVersion"
     javadocs "androidx.exifinterface:exifinterface:$exifVersion"
-    implementation "androidx.annotation:annotation:$annotationsVersion"
+    implementation "androidx.annotation:annotation:$annotationVersion"
     implementation "androidx.exifinterface:exifinterface:$exifVersion"
 }//apply from: rootProject.file('release.gradle')
