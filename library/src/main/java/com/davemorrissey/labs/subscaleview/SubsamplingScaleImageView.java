@@ -1193,7 +1193,7 @@ public class SubsamplingScaleImageView extends View {
             imageLoadedSent = true;
             onImageLoaded();
             if (onImageEventListener != null) {
-                onImageEventListener.onImageLoaded();
+                onImageEventListener.onImageLoaded(new WeakReference<>(bitmap));
             }
         }
         return imageLoaded;
@@ -3134,7 +3134,7 @@ public class SubsamplingScaleImageView extends View {
          * while only a preview is displayed, otherwise for most cases {@link #onReady()} is the best
          * event to listen to.
          */
-        void onImageLoaded();
+        void onImageLoaded(WeakReference<Bitmap> bitmap);
 
         /**
          * Called when a preview image could not be loaded. This method cannot be relied upon; certain
@@ -3175,7 +3175,7 @@ public class SubsamplingScaleImageView extends View {
     public static class DefaultOnImageEventListener implements OnImageEventListener {
 
         @Override public void onReady() { }
-        @Override public void onImageLoaded() { }
+        @Override public void onImageLoaded(WeakReference<Bitmap> bitmap) { }
         @Override public void onPreviewLoadError(Exception e) { }
         @Override public void onImageLoadError(Exception e) { }
         @Override public void onTileLoadError(Exception e) { }
