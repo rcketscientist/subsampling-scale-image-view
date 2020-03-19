@@ -1,8 +1,18 @@
 package com.davemorrissey.labs.subscaleview;
 
+import android.content.ContentResolver;
+import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Rect;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.exifinterface.media.ExifInterface;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Helper class used to set the source and additional attributes from a variety of sources. Supports
@@ -13,6 +23,22 @@ import androidx.annotation.NonNull;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class ImageSource<T> {
+
+    private static final String TAG = ImageSource.class.getSimpleName();
+
+    static final String FILE_SCHEME = "file:///";
+    static final String ASSET_SCHEME = "file:///android_asset/";
+
+    /** Display the image file in its native orientation. */
+    public static final int ORIENTATION_0 = 0;
+    /** Rotate the image 90 degrees clockwise. */
+    public static final int ORIENTATION_90 = 90;
+    /** Rotate the image 180 degrees. */
+    public static final int ORIENTATION_180 = 180;
+    /** Rotate the image 270 degrees clockwise. */
+    public static final int ORIENTATION_270 = 270;
+
+    public  static final List<Integer> VALID_ORIENTATIONS = Arrays.asList(ORIENTATION_0, ORIENTATION_90, ORIENTATION_180, ORIENTATION_270);
 
     private final T source;
     private boolean tile;
@@ -114,4 +140,58 @@ public class ImageSource<T> {
     }
 
     protected final boolean useOnlyRegionDecoder() { return useOnlyRegionDecoder; }
+
+    protected int getExifOrientation(Context context) {
+        int exifOrientation = ORIENTATION_0;
+
+        String sourceUri = source.toString();
+        if (sourceUri.startsWith(ContentResolver.SCHEME_CONTENT)) {
+            Cursor cursor = null;
+            try {
+                String[] columns = { MediaStore.Images.Media.ORIENTATION };
+                cursor = context.getContentResolver().query(Uri.parse(sourceUri), columns, null, null, null);
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        int orientation = cursor.getInt(0);
+                        if (VALID_ORIENTATIONS.contains(orientation)) {
+                            exifOrientation = orientation;
+                        } else {
+                            Log.w(TAG, "Unsupported orientation: " + orientation);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Could not get orientation of image from media store");
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        } else if (sourceUri.startsWith(ImageSource.FILE_SCHEME) && !sourceUri.startsWith(ImageSource.ASSET_SCHEME)) {
+            try {
+                ExifInterface exifInterface = new ExifInterface(sourceUri.substring(ImageSource.FILE_SCHEME.length() - 1));
+                int orientationAttr = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                exifOrientation = convertExifOrientation(orientationAttr);
+            } catch (Exception e) {
+                Log.w(TAG, "Could not get EXIF orientation of image");
+            }
+        }
+        return exifOrientation;
+    }
+
+    protected int convertExifOrientation(int exifOrientation) {
+        int rotation = ORIENTATION_0;
+        if (exifOrientation == ExifInterface.ORIENTATION_NORMAL || exifOrientation == ExifInterface.ORIENTATION_UNDEFINED) {
+            rotation = ORIENTATION_0;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            rotation = ORIENTATION_90;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            rotation = ORIENTATION_180;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            rotation = ORIENTATION_270;
+        } else {
+            Log.w(TAG, "Unsupported EXIF orientation: " + exifOrientation);
+        }
+        return rotation;
+    }
 }

@@ -69,19 +69,6 @@ public class SubsamplingScaleImageView extends View {
 
     private static final String TAG = SubsamplingScaleImageView.class.getSimpleName();
 
-    /** Attempt to use EXIF information on the image to rotate it. Works for external files only. */
-    public static final int ORIENTATION_USE_EXIF = -1;
-    /** Display the image file in its native orientation. */
-    public static final int ORIENTATION_0 = 0;
-    /** Rotate the image 90 degrees clockwise. */
-    public static final int ORIENTATION_90 = 90;
-    /** Rotate the image 180 degrees. */
-    public static final int ORIENTATION_180 = 180;
-    /** Rotate the image 270 degrees clockwise. */
-    public static final int ORIENTATION_270 = 270;
-
-    private static final List<Integer> VALID_ORIENTATIONS = Arrays.asList(ORIENTATION_0, ORIENTATION_90, ORIENTATION_180, ORIENTATION_270, ORIENTATION_USE_EXIF);
-
     /** During zoom animation, keep the point of the image that was tapped in the same place, and scale the image around it. */
     public static final int ZOOM_FOCUS_FIXED = 1;
     /** During zoom animation, move the point of the image that was tapped to the center of the screen. */
@@ -148,7 +135,7 @@ public class SubsamplingScaleImageView extends View {
     private boolean debug;
 
     // Image orientation setting
-    private int orientation = ORIENTATION_0;
+    private int customOrientation = -1;
 
     // Max scale allowed (prevent infinite zoom)
     private float maxScale = 2F;
@@ -349,10 +336,10 @@ public class SubsamplingScaleImageView extends View {
      * @param orientation orientation to be set. See ORIENTATION_ static fields for valid values.
      */
     public final void setOrientation(int orientation) {
-        if (!VALID_ORIENTATIONS.contains(orientation)) {
+        if (!ImageSource.VALID_ORIENTATIONS.contains(orientation)) {
             throw new IllegalArgumentException("Invalid orientation: " + orientation);
         }
-        this.orientation = orientation;
+        this.customOrientation = orientation;
         reset(false);
         invalidate();
         requestLayout();
@@ -1035,13 +1022,13 @@ public class SubsamplingScaleImageView extends View {
                             if (matrix == null) { matrix = new Matrix(); }
                             matrix.reset();
                             setMatrixArray(srcArray, 0, 0, tile.bitmap.getWidth(), 0, tile.bitmap.getWidth(), tile.bitmap.getHeight(), 0, tile.bitmap.getHeight());
-                            if (getRequiredRotation() == ORIENTATION_0) {
+                            if (getRequiredRotation() == ImageSource.ORIENTATION_0) {
                                 setMatrixArray(dstArray, tile.vRect.left, tile.vRect.top, tile.vRect.right, tile.vRect.top, tile.vRect.right, tile.vRect.bottom, tile.vRect.left, tile.vRect.bottom);
-                            } else if (getRequiredRotation() == ORIENTATION_90) {
+                            } else if (getRequiredRotation() == ImageSource.ORIENTATION_90) {
                                 setMatrixArray(dstArray, tile.vRect.right, tile.vRect.top, tile.vRect.right, tile.vRect.bottom, tile.vRect.left, tile.vRect.bottom, tile.vRect.left, tile.vRect.top);
-                            } else if (getRequiredRotation() == ORIENTATION_180) {
+                            } else if (getRequiredRotation() == ImageSource.ORIENTATION_180) {
                                 setMatrixArray(dstArray, tile.vRect.right, tile.vRect.bottom, tile.vRect.left, tile.vRect.bottom, tile.vRect.left, tile.vRect.top, tile.vRect.right, tile.vRect.top);
-                            } else if (getRequiredRotation() == ORIENTATION_270) {
+                            } else if (getRequiredRotation() == ImageSource.ORIENTATION_270) {
                                 setMatrixArray(dstArray, tile.vRect.left, tile.vRect.bottom, tile.vRect.left, tile.vRect.top, tile.vRect.right, tile.vRect.top, tile.vRect.right, tile.vRect.bottom);
                             }
                             matrix.setPolyToPoly(srcArray, 0, dstArray, 0, 4);
@@ -1073,11 +1060,11 @@ public class SubsamplingScaleImageView extends View {
             matrix.postRotate(getRequiredRotation());
             matrix.postTranslate(vTranslate.x, vTranslate.y);
 
-            if (getRequiredRotation() == ORIENTATION_180) {
+            if (getRequiredRotation() == ImageSource.ORIENTATION_180) {
                 matrix.postTranslate(scale * sWidth, scale * sHeight);
-            } else if (getRequiredRotation() == ORIENTATION_90) {
+            } else if (getRequiredRotation() == ImageSource.ORIENTATION_90) {
                 matrix.postTranslate(scale * sHeight, 0);
-            } else if (getRequiredRotation() == ORIENTATION_270) {
+            } else if (getRequiredRotation() == ImageSource.ORIENTATION_270) {
                 matrix.postTranslate(0, scale * sWidth);
             }
 
@@ -1537,7 +1524,7 @@ public class SubsamplingScaleImageView extends View {
                     Point dimensions = decoder.init(context, source);
                     int sWidth = dimensions.x;
                     int sHeight = dimensions.y;
-                    int exifOrientation = view.getExifOrientation(context, sourceUri);
+                    int exifOrientation = source.getExifOrientation(context);
                     if (view.sRegion != null) {
                         view.sRegion.left = Math.max(0, view.sRegion.left);
                         view.sRegion.top = Math.max(0, view.sRegion.top);
@@ -1572,7 +1559,7 @@ public class SubsamplingScaleImageView extends View {
      * Called by worker task when decoder is ready and image size and EXIF orientation is known.
      */
     private synchronized void onTilesInited(ImageRegionDecoder decoder, int sWidth, int sHeight, int sOrientation) {
-        debug("onTilesInited sWidth=%d, sHeight=%d, sOrientation=%d", sWidth, sHeight, orientation);
+        debug("onTilesInited sWidth=%d, sHeight=%d, sOrientation=%d", sWidth, sHeight, customOrientation);
         // If actual dimensions don't match the declared size, reset everything.
         if (this.sWidth > 0 && this.sHeight > 0 && (this.sWidth != sWidth || this.sHeight != sHeight)) {
             reset(false);
@@ -1714,7 +1701,6 @@ public class SubsamplingScaleImageView extends View {
         @Override
         protected Integer doInBackground(Void... params) {
             try {
-                String sourceUri = source.toString();
                 Context context = contextRef.get();
                 ImageRegionDecoder decoder = decoderRef.get();
 
@@ -1723,7 +1709,7 @@ public class SubsamplingScaleImageView extends View {
                     view.debug("BitmapLoadTask.doInBackground");
                     Rect fullImage = new Rect(0, 0, decoder.getWidth(), decoder.getHeight());
                     bitmap = decoder.decodeRegion(fullImage, sampleSize);
-                    return view.getExifOrientation(context, sourceUri);
+                    return source.getExifOrientation(context);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load bitmap", e);
@@ -1808,58 +1794,6 @@ public class SubsamplingScaleImageView extends View {
         }
     }
 
-    /**
-     * Helper method for load tasks. Examines the EXIF info on the image file to determine the orientation.
-     * This will only work for external files, not assets, resources or other URIs.
-     */
-    @AnyThread
-    private int getExifOrientation(Context context, String sourceUri) {
-        int exifOrientation = ORIENTATION_0;
-        // TODO: Handle this in ImageSource?
-//        if (sourceUri.startsWith(ContentResolver.SCHEME_CONTENT)) {
-//            Cursor cursor = null;
-//            try {
-//                String[] columns = { MediaStore.Images.Media.ORIENTATION };
-//                cursor = context.getContentResolver().query(Uri.parse(sourceUri), columns, null, null, null);
-//                if (cursor != null) {
-//                    if (cursor.moveToFirst()) {
-//                        int orientation = cursor.getInt(0);
-//                        if (VALID_ORIENTATIONS.contains(orientation) && orientation != ORIENTATION_USE_EXIF) {
-//                            exifOrientation = orientation;
-//                        } else {
-//                            Log.w(TAG, "Unsupported orientation: " + orientation);
-//                        }
-//                    }
-//                }
-//            } catch (Exception e) {
-//                Log.w(TAG, "Could not get orientation of image from media store");
-//            } finally {
-//                if (cursor != null) {
-//                    cursor.close();
-//                }
-//            }
-//        } else if (sourceUri.startsWith(ImageSource.FILE_SCHEME) && !sourceUri.startsWith(ImageSource.ASSET_SCHEME)) {
-//            try {
-//                ExifInterface exifInterface = new ExifInterface(sourceUri.substring(ImageSource.FILE_SCHEME.length() - 1));
-//                int orientationAttr = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-//                if (orientationAttr == ExifInterface.ORIENTATION_NORMAL || orientationAttr == ExifInterface.ORIENTATION_UNDEFINED) {
-//                    exifOrientation = ORIENTATION_0;
-//                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_90) {
-//                    exifOrientation = ORIENTATION_90;
-//                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_180) {
-//                    exifOrientation = ORIENTATION_180;
-//                } else if (orientationAttr == ExifInterface.ORIENTATION_ROTATE_270) {
-//                    exifOrientation = ORIENTATION_270;
-//                } else {
-//                    Log.w(TAG, "Unsupported EXIF orientation: " + orientationAttr);
-//                }
-//            } catch (Exception e) {
-//                Log.w(TAG, "Could not get EXIF orientation of image");
-//            }
-//        }
-        return exifOrientation;
-    }
-
     private void execute(AsyncTask<Void, Void, ?> asyncTask) {
         asyncTask.executeOnExecutor(executor);
     }
@@ -1909,8 +1843,8 @@ public class SubsamplingScaleImageView extends View {
      * Set scale, center and orientation from saved state.
      */
     private void restoreState(ImageViewState state) {
-        if (state != null && VALID_ORIENTATIONS.contains(state.getOrientation())) {
-            this.orientation = state.getOrientation();
+        if (state != null && ImageSource.VALID_ORIENTATIONS.contains(state.getOrientation())) {
+            this.customOrientation = state.getOrientation();
             this.pendingScale = state.getScale();
             this.sPendingCenter = state.getCenter();
             invalidate();
@@ -1995,11 +1929,7 @@ public class SubsamplingScaleImageView extends View {
      */
     @AnyThread
     private int getRequiredRotation() {
-        if (orientation == ORIENTATION_USE_EXIF) {
-            return sOrientation;
-        } else {
-            return orientation;
-        }
+        return customOrientation > 0 ? customOrientation : sOrientation;
     }
 
     /**
@@ -2636,20 +2566,10 @@ public class SubsamplingScaleImageView extends View {
     }
 
     /**
-     * Returns the orientation setting. This can return {@link #ORIENTATION_USE_EXIF}, in which case it doesn't tell you
-     * the applied orientation of the image. For that, use {@link #getAppliedOrientation()}.
+     * Returns the orientation setting.
      * @return the orientation setting. See static fields.
      */
     public final int getOrientation() {
-        return orientation;
-    }
-
-    /**
-     * Returns the actual orientation of the image relative to the source file. This will be based on the source file's
-     * EXIF orientation if you're using ORIENTATION_USE_EXIF. Values are 0, 90, 180, 270.
-     * @return the orientation applied after EXIF information has been extracted. See static fields.
-     */
-    public final int getAppliedOrientation() {
         return getRequiredRotation();
     }
 
