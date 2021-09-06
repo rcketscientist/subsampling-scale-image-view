@@ -2,12 +2,11 @@ package com.davemorrissey.labs.subscaleview.test;
 
 import android.app.ActionBar;
 import android.os.Bundle;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
 import android.view.MenuItem;
 
 import java.util.List;
-
-import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentActivity;
 
 public abstract class AbstractFragmentsActivity extends FragmentActivity {
 

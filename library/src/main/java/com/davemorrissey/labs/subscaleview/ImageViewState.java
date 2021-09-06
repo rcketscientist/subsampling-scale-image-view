@@ -1,10 +1,9 @@
 package com.davemorrissey.labs.subscaleview;
 
 import android.graphics.PointF;
+import androidx.annotation.NonNull;
 
 import java.io.Serializable;
-
-import androidx.annotation.NonNull;
 
 /**
  * Wraps the scale, center and orientation of a displayed image for easy restoration on screen rotate.

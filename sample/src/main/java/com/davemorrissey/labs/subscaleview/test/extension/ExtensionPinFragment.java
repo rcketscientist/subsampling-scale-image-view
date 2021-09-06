@@ -2,6 +2,8 @@ package com.davemorrissey.labs.subscaleview.test.extension;
 
 import android.graphics.PointF;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,9 +12,6 @@ import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.test.R.id;
 import com.davemorrissey.labs.subscaleview.test.R.layout;
 import com.davemorrissey.labs.subscaleview.test.extension.views.PinView;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 
 public class ExtensionPinFragment extends Fragment {
 

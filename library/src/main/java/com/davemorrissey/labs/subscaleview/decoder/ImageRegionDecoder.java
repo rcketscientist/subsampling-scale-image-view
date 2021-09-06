@@ -4,9 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
-
 import com.davemorrissey.labs.subscaleview.ImageSource;
-
 import androidx.annotation.NonNull;
 
 /**

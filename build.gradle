@@ -14,13 +14,6 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.0-alpha08'
-    }
-	
-	ext {
-        compileSdkVersion = 28
-		exifVersion = "1.0.0-rc02"
-        annotationsVersion = "1.0.0-rc02"
-        appcompatVersion = "1.0.0-rc02"
+        classpath 'com.android.tools.build:gradle:4.1.1'
     }
 }

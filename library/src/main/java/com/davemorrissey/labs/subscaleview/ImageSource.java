@@ -5,12 +5,14 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Rect;
 import android.net.Uri;
+import androidx.annotation.NonNull;
 import android.provider.MediaStore;
 import android.util.Log;
-
-import androidx.annotation.NonNull;
 import androidx.exifinterface.media.ExifInterface;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.List;
 

@@ -2,9 +2,7 @@ package com.davemorrissey.labs.subscaleview.decoder;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-
 import com.davemorrissey.labs.subscaleview.ImageSource;
-
 import androidx.annotation.NonNull;
 
 /**

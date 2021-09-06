@@ -12,9 +12,15 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import androidx.annotation.Nullable;
+import androidx.exifinterface.media.ExifInterface;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
+import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -42,10 +48,6 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import androidx.annotation.AnyThread;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 /**
  * <p>
@@ -1046,7 +1048,7 @@ public class SubsamplingScaleImageView extends View {
                 }
             }
 
-        } else if (bitmap != null) {
+        } else if (bitmap != null && !bitmap.isRecycled()) {
 
             float xScale = scale, yScale = scale;
             if (bitmapIsPreview) {
@@ -1217,17 +1219,18 @@ public class SubsamplingScaleImageView extends View {
 
         satTemp = new ScaleAndTranslate(0f, new PointF(0, 0));
         fitToBounds(true, satTemp);
-//
-//        // Load double resolution - next level will be split into four tiles and at the center all four are required,
-//        // so don't bother with tiling until the next level 16 tiles are needed.
+
+        // Load double resolution - next level will be split into four tiles and at the center all four are required,
+        // so don't bother with tiling until the next level 16 tiles are needed.
         fullImageSampleSize = calculateInSampleSize(satTemp.scale);
         if (fullImageSampleSize > 1) {
             fullImageSampleSize /= 2;
         }
 
         if (fullImageSampleSize == 1 && sRegion == null && sWidth() < maxTileDimensions.x && sHeight() < maxTileDimensions.y) {
-//            // Whole image is required at native resolution, and is smaller than the canvas max bitmap size.
-//            // Use BitmapDecoder for better image support.
+            // Whole image is required at native resolution, and is smaller than the canvas max bitmap size.
+            // Use BitmapDecoder for better image support.
+            // TODO: This was a major change from upstream, if there are issue look here first
             baseLayerLoaded = true;
             int sampleSize = decoder.getWidth() / this.getWidth();
             BitmapLoadTask task = new BitmapLoadTask(this, getContext(), decoder, source, sampleSize, false);

@@ -3,12 +3,8 @@ package com.davemorrissey.labs.subscaleview.test.imagedisplay;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-
 import androidx.annotation.NonNull;
-import androidx.core.app.Fragment;
 import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
