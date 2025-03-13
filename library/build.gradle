@@ -1,4 +1,7 @@
-apply plugin: 'com.android.library'
+plugins {
+    id "com.android.library"
+    id "maven-publish"
+}
 
 group = 'com.davemorrissey.labs'
 archivesBaseName = 'subsampling-scale-image-view-androidx'
@@ -39,4 +42,16 @@ task javadoc(type: Javadoc) {
     options.links = ['https://developer.android.com/reference/']
 }
 
-//apply from: rootProject.file('release.gradle')
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                from components.release
+                groupId = 'com.davemorrissey.labs'
+                artifactId = 'subscaleview'
+                version = '1.0'
+            }
+        }
+    }
+}
